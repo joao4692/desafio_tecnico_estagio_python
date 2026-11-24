@@ -2,7 +2,7 @@ import httpx
 
 from ibge.erros import ErroApi
 
-from ibge.modelos import Estado,Municipio,DadosPortal,Ocorrencia
+from ibge.modelos import Estado, Municipio
 from ibge.texto import chave_ordenacao
 
 URL_API = "https://servicodados.ibge.gov.br/api/v1/localidades"

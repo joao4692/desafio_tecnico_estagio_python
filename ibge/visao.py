@@ -23,3 +23,7 @@ def mostrar_municipios(municipios: list[Municipio]) -> None:
     print(f"\nMunicípios selecionados ({len(municipios)}):")
     for municipio in municipios:
         print(f"  {municipio.codigo_ibge} - {municipio.nome}")
+
+
+def mostrar_progresso(posicao: int, total: int, nome: str) -> None:
+    print(f"[{posicao}/{total}] {nome}...")

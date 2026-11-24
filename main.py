@@ -3,7 +3,7 @@ import argparse
 
 
 from ibge import controlador, visao
-from ibge.erros import ErroApi
+from ibge.erros import ErroApi, ErroPortal
 
 def ler_argumentos() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
@@ -21,7 +21,7 @@ def main() -> None:
     try:
         args = ler_argumentos()
         controlador.executar(uf=args.uf, limite_texto=args.limite)
-    except ErroApi as erro:
+    except (ErroApi, ErroPortal) as erro:
         visao.mostrar_erro(f"não foi possível continuar: {erro}")
         sys.exit(1)
     except KeyboardInterrupt:

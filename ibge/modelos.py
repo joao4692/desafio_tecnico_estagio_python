@@ -33,3 +33,10 @@ class Ocorrencia:
     codigo_ibge: str
     municipio: str
     motivo: str
+
+
+@dataclass
+class PaginaVisitada:
+    municipio: Municipio
+    url_fonte: str
+    html: str | None = None

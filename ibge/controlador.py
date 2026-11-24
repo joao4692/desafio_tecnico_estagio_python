@@ -1,5 +1,6 @@
-from ibge import api, visao
-from ibge.modelos import Estado
+from ibge import api, portal, visao
+from ibge.erros import ErroPortal
+from ibge.modelos import Estado, Municipio, Ocorrencia, PaginaVisitada
 
 LIMITE_PADRAO = 5
 
@@ -78,6 +79,29 @@ def obter_limite(total: int, limite_texto: str | None) -> int:
 
 
 
+def visitar_municipios(municipios: list[Municipio]) -> tuple[list[PaginaVisitada], list[Ocorrencia]]:
+    paginas = []
+    ocorrencias = []
+    with portal.navegador_aberto() as pagina:
+        for posicao, municipio in enumerate(municipios, start=1):
+            visao.mostrar_progresso(posicao, len(municipios), municipio.nome)
+            url_nome = portal.url_pelo_nome(municipio)
+            try:
+                html, url = portal.abrir_com_plano_b(pagina, municipio)
+                paginas.append(PaginaVisitada(municipio, url, html))
+                visao.mostrar_mensagem(f"   OK, código confere ({url})")
+                if url != url_nome:
+                    motivo = f"URL pelo nome não encontrada ({url_nome}); usada a URL pelo código"
+                    ocorrencias.append(Ocorrencia(municipio.codigo_ibge, municipio.nome, motivo))
+            except ErroPortal as erro:
+                paginas.append(PaginaVisitada(municipio, url_nome))
+                ocorrencias.append(Ocorrencia(municipio.codigo_ibge, municipio.nome, str(erro)))
+                visao.mostrar_erro(str(erro))
+            if posicao < len(municipios):
+                portal.pausar(pagina)
+    return paginas, ocorrencias
+
+
 def executar(uf: str | None = None, limite_texto: str | None = None) -> None:
     estados = api.listar_estados()
     estado = obter_estado(estados, uf)
@@ -86,4 +110,13 @@ def executar(uf: str | None = None, limite_texto: str | None = None) -> None:
     selecionados = municipios[:limite]
     visao.mostrar_mensagem(f"\nUF escolhida: {estado.nome} ({estado.sigla}), {len(municipios)} municípios na API")
     visao.mostrar_municipios(selecionados)
+    visao.mostrar_mensagem("\nAbrindo o portal do IBGE (uma janela do navegador vai abrir)...")
+    paginas, ocorrencias = visitar_municipios(selecionados)
+    abertas = 0
+    for pagina in paginas:
+        if pagina.html is not None:
+            abertas += 1
+    visao.mostrar_mensagem(f"\nPáginas abertas: {abertas} de {len(paginas)} | Ocorrências: {len(ocorrencias)}")
+    for ocorrencia in ocorrencias:
+        visao.mostrar_mensagem(f"  - {ocorrencia.municipio}: {ocorrencia.motivo}")
 

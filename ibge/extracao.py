@@ -22,7 +22,7 @@ def ler_valor(bloco: Tag) -> str | None:
     if valor is None:
         return None
     texto = valor.find(string=True, recursive=False)
-    if texto is None or texto.strip() == "":
+    if texto is None or texto.strip() in ("", "-"):
         return None
     return texto.strip()
 

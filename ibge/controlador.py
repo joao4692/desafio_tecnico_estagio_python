@@ -59,8 +59,10 @@ def pedir_limite(total: int) -> int:
             visao.mostrar_erro(f"digite um número de 1 a {total}, ou Enter para {LIMITE_PADRAO}.")
         else:
             avisar_se_reduziu(resposta, total)
+            return limite
+    
 
-    #dados do estado
+#dados do estado
 def obter_estado(estados: list[Estado], uf: str | None) -> Estado:
     if uf is not None:
         estado = escolher_estado(uf, estados)
@@ -75,7 +77,7 @@ def obter_limite(total: int, limite_texto: str | None) -> int:
         limite = interpretar_limite(limite_texto, total)
         if limite is not None:
             avisar_se_reduziu(limite_texto, total)
-            return limite
+        
         visao.mostrar_erro(f"limite '{limite_texto}' inválido. Informe pelo menu.")
     return pedir_limite(total)
 
@@ -119,11 +121,11 @@ def visitar_municipios(municipios: list[Municipio]) -> tuple[list[PaginaVisitada
             visao.mostrar_progresso(posicao, len(municipios), municipio.nome)
             url_nome = portal.url_pelo_nome(municipio)
             try:
-                html, url = portal.abrir_com_plano_b(pagina, municipio)
+                html, url, falha_nome = portal.abrir_com_plano_b(pagina, municipio)
                 paginas.append(PaginaVisitada(municipio, url, html))
                 visao.mostrar_mensagem(f"   OK, código confere ({url})")
-                if url != url_nome:
-                    motivo = f"URL pelo nome não encontrada ({url_nome}); usada a URL pelo código"
+                if falha_nome is not None:
+                    motivo = f"URL pelo nome falhou ({url_nome}): {falha_nome}; usada a URL pelo código"
                     ocorrencias.append(Ocorrencia(municipio.codigo_ibge, municipio.nome, motivo))
             except ErroPortal as erro:
                 paginas.append(PaginaVisitada(municipio, url_nome))

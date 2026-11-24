@@ -68,14 +68,14 @@ def abrir_municipio(pagina: Page, url: str, codigo_ibge: str) -> str:
     return html
 
 
-def abrir_com_plano_b(pagina: Page, municipio: Municipio) -> tuple[str, str]:
+def abrir_com_plano_b(pagina: Page, municipio: Municipio) -> tuple[str, str, str | None]:
     url_nome = url_pelo_nome(municipio)
     try:
-        return abrir_municipio(pagina, url_nome, municipio.codigo_ibge), url_nome
+        return abrir_municipio(pagina, url_nome, municipio.codigo_ibge), url_nome, None
     except ErroPortal as erro_nome:
         url_codigo = montar_url(municipio.uf, municipio.codigo_ibge)
         try:
-            return abrir_municipio(pagina, url_codigo, municipio.codigo_ibge), url_codigo
+            return abrir_municipio(pagina, url_codigo, municipio.codigo_ibge), url_codigo, str(erro_nome)
         except ErroPortal as erro_codigo:
             raise ErroPortal(f"pelo nome: {erro_nome} | pelo código: {erro_codigo}")
 

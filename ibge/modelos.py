@@ -40,3 +40,4 @@ class PaginaVisitada:
     municipio: Municipio
     url_fonte: str
     html: str | None = None
+    dados: DadosPortal | None = None

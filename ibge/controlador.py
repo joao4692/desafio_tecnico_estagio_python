@@ -1,4 +1,4 @@
-from ibge import api, portal, visao
+from ibge import api, extracao, portal, visao
 from ibge.erros import ErroPortal
 from ibge.modelos import Estado, Municipio, Ocorrencia, PaginaVisitada
 
@@ -77,6 +77,25 @@ def obter_limite(total: int, limite_texto: str | None) -> int:
 
 
 
+def executar(uf: str | None = None, limite_texto: str | None = None) -> None:
+    estados = api.listar_estados()
+    estado = obter_estado(estados, uf)
+    municipios = api.listar_municipios(estado)
+    limite = obter_limite(len(municipios), limite_texto)
+    selecionados = municipios[:limite]
+    visao.mostrar_mensagem(f"\nUF escolhida: {estado.nome} ({estado.sigla}), {len(municipios)} municípios na API")
+    visao.mostrar_municipios(selecionados)
+    visao.mostrar_mensagem("\nAbrindo o portal do IBGE (uma janela do navegador vai abrir)...")
+    paginas, ocorrencias = visitar_municipios(selecionados)
+    extrair_dados_das_paginas(paginas, ocorrencias)
+
+    abertas = 0
+    for pagina in paginas:
+        if pagina.html is not None:
+            abertas += 1
+    visao.mostrar_mensagem(f"\nPáginas abertas: {abertas} de {len(paginas)} | Ocorrências: {len(ocorrencias)}")
+    for ocorrencia in ocorrencias:
+        visao.mostrar_mensagem(f"  - {ocorrencia.municipio}: {ocorrencia.motivo}")
 
 
 def visitar_municipios(municipios: list[Municipio]) -> tuple[list[PaginaVisitada], list[Ocorrencia]]:
@@ -102,21 +121,15 @@ def visitar_municipios(municipios: list[Municipio]) -> tuple[list[PaginaVisitada
     return paginas, ocorrencias
 
 
-def executar(uf: str | None = None, limite_texto: str | None = None) -> None:
-    estados = api.listar_estados()
-    estado = obter_estado(estados, uf)
-    municipios = api.listar_municipios(estado)
-    limite = obter_limite(len(municipios), limite_texto)
-    selecionados = municipios[:limite]
-    visao.mostrar_mensagem(f"\nUF escolhida: {estado.nome} ({estado.sigla}), {len(municipios)} municípios na API")
-    visao.mostrar_municipios(selecionados)
-    visao.mostrar_mensagem("\nAbrindo o portal do IBGE (uma janela do navegador vai abrir)...")
-    paginas, ocorrencias = visitar_municipios(selecionados)
-    abertas = 0
-    for pagina in paginas:
-        if pagina.html is not None:
-            abertas += 1
-    visao.mostrar_mensagem(f"\nPáginas abertas: {abertas} de {len(paginas)} | Ocorrências: {len(ocorrencias)}")
-    for ocorrencia in ocorrencias:
-        visao.mostrar_mensagem(f"  - {ocorrencia.municipio}: {ocorrencia.motivo}")
+
+def extrair_dados_das_paginas(paginas: list[PaginaVisitada], ocorrencias: list[Ocorrencia]) -> None:
+    for visitada in paginas:
+        if visitada.html is None:
+            continue
+        visitada.dados = extracao.extrair_dados(visitada.html)
+        vazios = extracao.campos_vazios(visitada.dados)
+        if len(vazios) > 0:
+            motivo = "campos não encontrados na página: " + ", ".join(vazios)
+            ocorrencias.append(Ocorrencia(visitada.municipio.codigo_ibge, visitada.municipio.nome, motivo))
+
 

@@ -16,10 +16,8 @@ class Municipio:
     uf: str
     regiao: str
 
+
 #DADOS DO PORTAL
-
-
-
 @dataclass
 class DadosPortal:
     prefeito: str | None = None

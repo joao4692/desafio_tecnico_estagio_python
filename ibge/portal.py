@@ -29,7 +29,7 @@ def navegador_aberto():
         try:
             navegador = playwright.chromium.launch(headless=False)
         except ErroPlaywright:
-            raise ErroPortal("não foi possível abrir o navegador (o Playwright precisa de interface gráfica)")
+            raise ErroPortal("não foi possível abrir o navegador (rode 'playwright install chromium' e confira se há interface gráfica)")
         try:
             yield navegador.new_page()
         finally:

@@ -1,4 +1,8 @@
-from ibge import api, extracao, portal, visao
+
+
+from datetime import date
+
+from ibge import api, exportacao, extracao, portal, visao
 from ibge.erros import ErroPortal
 from ibge.modelos import Estado, Municipio, Ocorrencia, PaginaVisitada
 
@@ -76,6 +80,14 @@ def obter_limite(total: int, limite_texto: str | None) -> int:
     return pedir_limite(total)
 
 
+def salvar_planilha(sigla: str, paginas: list[PaginaVisitada], ocorrencias: list[Ocorrencia]) -> None:
+    data_coleta = date.today()
+    tabela = exportacao.montar_tabela(paginas, data_coleta)
+    resumo = exportacao.montar_resumo(sigla, data_coleta, paginas, ocorrencias)
+    tabela_ocorrencias = exportacao.montar_ocorrencias(ocorrencias)
+    caminho = exportacao.salvar_excel(sigla, tabela, resumo, tabela_ocorrencias)
+    visao.mostrar_mensagem(f"\nPlanilha salva em: {caminho}")
+
 
 def executar(uf: str | None = None, limite_texto: str | None = None) -> None:
     estados = api.listar_estados()
@@ -96,6 +108,7 @@ def executar(uf: str | None = None, limite_texto: str | None = None) -> None:
     visao.mostrar_mensagem(f"\nPáginas abertas: {abertas} de {len(paginas)} | Ocorrências: {len(ocorrencias)}")
     for ocorrencia in ocorrencias:
         visao.mostrar_mensagem(f"  - {ocorrencia.municipio}: {ocorrencia.motivo}")
+    salvar_planilha(estado.sigla, paginas, ocorrencias)
 
 
 def visitar_municipios(municipios: list[Municipio]) -> tuple[list[PaginaVisitada], list[Ocorrencia]]:
